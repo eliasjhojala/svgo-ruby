@@ -1,0 +1,202 @@
+#!/usr/bin/env ruby
+
+##
+# This is a command line tool primarily to test wrapping Node SVGO, it is NOT
+# a drop-in replacement of the node SVGO command line tool. Feel free to add
+# that functionality through a Pull Request if you require it.
+##
+
+$:.push File.expand_path("../../lib", __FILE__)
+require 'svgo'
+require 'version'
+require 'optparse'
+require 'ostruct'
+require 'pp'
+
+options = OpenStruct.new
+options.verbose = false
+options.output_file = nil
+options.js2svg = { pretty: false }
+plugins = {
+addAttributesToSVGElement:
+  "adds attributes to an outer <svg> element",
+addClassesToSVGElement:
+  "adds classnames to an outer <svg> element",
+cleanupAttrs:
+  "cleanups attributes from newlines, trailing and repeating spaces",
+cleanupEnableBackground:
+  "remove or cleanup enable-background attribute when possible",
+cleanupIDs:
+  "removes unused IDs and minifies used",
+cleanupListOfValues:
+  "rounds list of values to the fixed precision",
+cleanupNumericValues:
+  "rounds numeric values to the fixed precision, removes default ‘px’ units",
+collapseGroups:
+  "collapses useless groups",
+convertColors:
+  "converts colors: rgb() to #rrggbb and #rrggbb to #rgb",
+convertPathData:
+  "optimizes path data: writes in shorter form, applies transformations",
+convertShapeToPath:
+  "converts basic shapes to more compact path form",
+convertStyleToAttrs:
+  "converts style to attributes",
+convertTransform:
+  "collapses multiple transformations and optimizes it",
+inlineStyles:
+  "inline styles (additional options)",
+mergePaths:
+  "merges multiple paths in one if possible",
+minifyStyles:
+  "minifies styles and removes unused styles based on usage data",
+moveElemsAttrsToGroup:
+  "moves elements attributes to the existing group wrapper",
+moveGroupAttrsToElems:
+  "moves some group attributes to the content elements",
+prefixIds:
+  "prefix IDs",
+removeComments:
+  "removes comments",
+removeDesc:
+  "removes <desc>",
+removeDimensions:
+  "removes width and height in presence of viewBox (opposite to removeViewBox, disable it first)",
+removeDoctype:
+  "removes doctype declaration",
+removeEditorsNSData:
+  "removes editors namespaces, elements and attributes",
+removeElementsByAttr:
+  "removes arbitrary elements by ID or className (disabled by default)",
+removeEmptyAttrs:
+  "removes empty attributes",
+removeEmptyContainers:
+  "removes empty container elements",
+removeEmptyText:
+  "removes empty <text> elements",
+removeHiddenElems:
+  "removes hidden elements (zero sized, with absent attributes)",
+removeMetadata:
+  "removes <metadata>",
+removeNonInheritableGroupAttrs:
+  "removes non-inheritable group’s presentational attributes",
+removeRasterImages:
+  "removes raster images (disabled by default)",
+removeScriptElement:
+  "removes <script> elements (disabled by default)",
+removeStyleElement:
+  "removes <style> element (disabled by default)",
+removeTitle:
+  "removes <title>",
+removeUnknownsAndDefaults:
+  "removes unknown elements content and attributes, removes attrs with default values",
+removeUnusedNS:
+  "removes unused namespaces declaration",
+removeUselessDefs:
+  "removes elements in <defs> without id",
+removeUselessStrokeAndFill:
+  "removes useless stroke and fill attributes",
+removeViewBox:
+  "removes viewBox attribute when possible",
+removeXMLNS:
+  "removes xmlns attribute (for inline svg, disabled by default)",
+removeXMLProcInst:
+  "removes XML processing instructions",
+sortAttrs:
+  "sorts element attributes (disabled by default)"
+}
+
+options.plugins = Hash[
+  plugins.map { |k, str| [k, !str.include?("disabled by default")]}
+]
+OptionParser.new do |opts|
+  opts.banner = "Usage: svgo-ruby [options] [input file]"
+  opts.separator ""
+  opts.separator "Specific options:"
+  #opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+  #  options.verbose = v
+  #end
+  opts.on("-o", "--out [file]", String, "Output file.") do |file|
+    options.output_file = file
+  end
+  opts.separator ""
+  opts.separator "Enabling/disabling plugins:"
+  opts.on_tail("--version", "Show version") do
+    puts SvgoVersion::VERSION
+    exit
+  end
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+  opts.on_tail("-p", "--[no-]pretty", "Pretty print SVG.") do |state|
+    options.js2svg.pretty = state
+  end
+  opts.on_tail(
+    "-p",
+    "--[no-]multi-pass",
+    "Try to optimize multiple times") do |state|
+    options.multipass = state
+  end
+  plugins.each do |p, desc|
+    opts.on("--[no-]#{p}", desc) do |state|
+        options.plugins[p.to_sym] = state
+    end
+  end
+  opts.on("--removeAttrs", String, %q(
+    A comma separated list of Javascript compatible regular expressions.
+    The format described in the plugin:
+
+    [element]:([attribute]|[attribute])
+
+    Elements and attributes should be separated by a colon.
+
+    examples:
+
+    .*:id
+
+    path:(id|stroke)
+
+    fill
+
+    path:(id|stroke), fill
+
+    To get an idea of what should happen imagine your expressions wrapped in:
+
+    ^<expression>$
+
+    Eg:
+
+    ^.*$:^(stroke|path)$
+
+    For more information on the format see:
+    https://github.com/svg/svgo/blob/master/plugins/removeAttrs.js
+    ).sub(/^\n\s+/,'').gsub(/ {4}/, " " * 12)) do |plugin_args|
+      patterns = plugin_args.sub(/\s*,\s*/, ",").split(",")
+      options.plugins.removeAttrs = patterns
+    end
+end.parse!
+
+svgo = SvgOptimizer.new(options.to_h)
+
+# Read from stdin..
+if not STDIN.tty? and not STDIN.closed?
+    input_data = ARGF.read
+    output_data = svgo.optimize(input_data)
+else
+    # See if there is an input file name
+    input_file = ARGV.pop
+    if not input_file
+        raise "No input file specified."
+    else
+        output_data = svgo.optimize_file(input_file)
+    end
+end
+
+if not options.output_file
+    puts output_data
+else
+    File.new(options.output_file, 'w').write(output_data)
+end
+
+

@@ -1,0 +1,29 @@
+{
+  "name": "svgo-ruby",
+  "version": "0.1.0",
+  "description": "A Ruby wrapped for SVGO using execjs.",
+  "main": "bin/svgo-ruby",
+  "repository": "http://rubygems.org/gems/svgo",
+  "author": "Chris Snijder (Greenhost BV)",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "browserify": "^16.2.3",
+    "svgo": "^1.1.1"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "ie": "8"
+          }
+        }
+      ]
+    ]
+  }
+}
