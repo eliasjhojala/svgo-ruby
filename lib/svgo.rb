@@ -4,7 +4,6 @@ require 'pry'
 
 class SvgOptimizer
     def initialize(options)
-        puts ExecJS.runtime
         valid_svgo_opts = [:js2svg, :plugins, :multipass]
         @config = options.select { |k,_| valid_svgo_opts.include? k }.to_json
         svgo_js = File.expand_path("../../svgo-js/svgo-built.js", __FILE__)

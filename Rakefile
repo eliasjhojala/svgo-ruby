@@ -4,7 +4,6 @@ task :build do
     -o ./svgo-js/svgo-built.js \
     ./svgo-js/svgo-wrapper.js
   ))
-  sh("npx babel ./svgo-js/svgo-built.js -o ./svgo-js/svgo-es5.js")
 end
 
 task :install do

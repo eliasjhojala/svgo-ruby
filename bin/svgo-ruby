@@ -129,10 +129,10 @@ OptionParser.new do |opts|
     puts opts
     exit
   end
-  opts.on_tail("-p", "--[no-]pretty", "Pretty print SVG.") do |state|
-    options.js2svg.pretty = state
+  opts.on("-p", "--[no-]pretty", "Pretty print SVG.") do |state|
+    options.js2svg[:pretty] = state
   end
-  opts.on_tail(
+  opts.on(
     "-p",
     "--[no-]multi-pass",
     "Try to optimize multiple times") do |state|
@@ -182,21 +182,30 @@ svgo = SvgOptimizer.new(options.to_h)
 # Read from stdin..
 if not STDIN.tty? and not STDIN.closed?
     input_data = ARGF.read
-    output_data = svgo.optimize(input_data)
+    result = svgo.optimize(input_data)
 else
     # See if there is an input file name
     input_file = ARGV.pop
     if not input_file
         raise "No input file specified."
     else
-        output_data = svgo.optimize_file(input_file)
+        result = svgo.optimize_file(input_file)
     end
 end
 
+if result['errors'].length > 0
+  if result['errors'].length > 1
+    puts %Q(Errors occurred: \n - #{result['errors'].join("\n - s")})
+  else
+    puts "An error occurred: #{result['errors'][0]}"
+  end
+  exit(1)
+end
+
 if not options.output_file
-    puts output_data
+    puts result['data']
 else
-    File.new(options.output_file, 'w').write(output_data)
+    File.new(options.output_file, 'w').write(result['data'])
 end
 
 
