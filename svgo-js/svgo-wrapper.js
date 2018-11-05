@@ -69,41 +69,42 @@ function SVGO(options) {
         break;
     }
   });
-
+  var errors = [];
   this.options = CONFIG(options);
   this.optimize = function(svgstr) {
     if (self.options.error)
-      throw "Configuration error: " + self.options.error;
+      errors.push("Configuration error: " + self.options.error);
     var passes = self.options.multipass ? 10 : 1;
-    var lastSize;
-    var newSize = Number.POSITIVE_INFINITY;
+    var lastSize = Number.POSITIVE_INFINITY;
+    var newSize = 0;
     var counter = 0;
-    var errors = [];
+
     SVG2JS(svgstr, function(svgjs) {
       if (svgjs.error) {
         // If we don't have anything yet, throw an exception.
-        throw "Error before optimization: " + svgjs.error;
-      }
-      while (counter++ <= passes && newSize < lastSize) {
-        lastSize = newSize;
-        try {
-          svgjs = self._optimize(svgjs, self.options.plugins);
-          newSize = JSON.stringify(self.svgjs.content).length;
-        } catch (exc) {
-          // Return the best we can without further recursion.
-          if (self.counter == 0)
-            throw exc;
-          // Get out of while loop, we have something to return
-          // that is somewhat optimized, only the last iteration
-          // failed.
-          errors.push(
-            "Error occurred during optimization pass " + counter +
-            ", returning data from pass " + (counter - 1) +"."
-          );
-          break;
+        errors.push("Error before optimization: " + svgjs.error);
+      } else {
+        while (counter++ <= passes && newSize < lastSize) {
+          lastSize = newSize;
+          try {
+            svgjs = self._optimize(svgjs, self.options.plugins);
+            newSize = JS2SVG(svgjs, self.options.js2svg).data.length;
+          } catch (exc) {
+            // Nothing to return yet..
+            if (counter == 1)
+              throw exc;
+            // Get out of while loop, we have something to return
+            // that is somewhat optimized, only the last iteration
+            // failed.
+            errors.push(
+              "Error occurred during optimization pass " + counter +
+              ", returning data from pass " + (counter - 1) +"."
+            );
+            break;
+          }
         }
+        self.svgjs = svgjs;
       }
-      self.svgjs = svgjs;
     });
     return {
       data: JS2SVG(self.svgjs, self.options.js2svg).data,
