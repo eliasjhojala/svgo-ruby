@@ -2,8 +2,51 @@ require 'execjs'
 require 'json'
 require 'pry'
 
+PLUGINS_DEFAULT = [
+    :addAttributesToSVGElement,
+    :addClassesToSVGElement,
+    :cleanupAttrs,
+    :cleanupEnableBackground,
+    :cleanupIDs,
+    :cleanupListOfValues,
+    :cleanupNumericValues,
+    :collapseGroups,
+    :convertColors,
+    :convertPathData,
+    :convertShapeToPath,
+    :convertStyleToAttrs,
+    :convertTransform,
+    :inlineStyles,
+    :mergePaths,
+    :minifyStyles,
+    :moveElemsAttrsToGroup,
+    :moveGroupAttrsToElems,
+    :prefixIds,
+    :removeComments,
+    :removeDesc,
+    :removeDimensions,
+    :removeDoctype,
+    :removeEditorsNSData,
+    :removeEmptyAttrs,
+    :removeEmptyContainers,
+    :removeEmptyText,
+    :removeHiddenElems,
+    :removeMetadata,
+    :removeNonInheritableGroupAttrs,
+    :removeTitle,
+    :removeUnknownsAndDefaults,
+    :removeUnusedNS,
+    :removeUselessDefs,
+    :removeUselessStrokeAndFill,
+    :removeViewBox,
+    :removeXMLProcInst
+]
+
 class SvgOptimizer
     def initialize(options)
+        if not options.respond_to? plugins
+            options.plugins = PLUGINS_DEFAULT.map {|p| [p, true]}.to_h
+        end
         valid_svgo_opts = [:js2svg, :plugins, :multipass, :floatPrecision]
         @config = options.select { |k,_| valid_svgo_opts.include? k }.to_json
         svgo_js = File.expand_path("../../svgo-js/svgo-built.js", __FILE__)
