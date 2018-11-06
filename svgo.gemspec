@@ -6,12 +6,12 @@ Gem::Specification.new do |s|
   s.version     = SvgoVersion::VERSION
   s.date        = "2018-10-26"
   s.summary     = "SVGO for Ruby."
-  s.description = "A Ruby wrapped for SVGO using execjs."
+  s.description = "A Ruby wrapper for SVGO using execjs."
   s.authors     = ["Chris Snijder"]
   s.email       = "chris@greenhost.nl"
   s.files       = ["lib/svgo.rb"]
   s.homepage    = "http://rubygems.org/gems/svgo"
-  s.license     = "MIT"
+  s.license     = "Apache 2.0"
   s.files       = `git ls-files`.split("\n") - [
     ".gitignore",
     ".ruby-version",
