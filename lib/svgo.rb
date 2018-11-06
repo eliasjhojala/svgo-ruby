@@ -68,36 +68,44 @@ class SvgoOptions
         @options.js2svg
     end
 
-    def js2svg=(arg)
-        @options.js2svg = arg
+    def js2svg=(js2svg)
+        @options.js2svg = js2svg
     end
 
     def plugins
         @options.plugins
     end
 
-    def plugins=(arg)
-        @options.plugins = arg
+    def plugins=(plugins)
+        @options.plugins = plugins
     end
 
     def floatPrecision
         @options.floatPrecision
     end
 
-    def floatPrecision=(arg)
-        @options.floatPrecision = arg
+    def floatPrecision=(floatPrecision)
+        @options.floatPrecision = floatPrecision
     end
 
     def multipass
         @options.multipass
     end
 
-    def multipass=(arg)
-        @options.multipass = arg
+    def multipass=(multipass)
+        @options.multipass = multipass
     end
 
     def [](key)
         @options[key.to_sym]
+    end
+
+    def runtime
+        @options.runtime
+    end
+
+    def runtime=(runtime)
+        @options.runtime = runtime
     end
 end
 
@@ -109,6 +117,27 @@ class SvgOptimizer
         else
             @options = options
         end
+
+        runtime = @options.delete "runtime"
+        unless runtime
+            # therubyracer is a first choice for execjs but its libv8 is too
+            # old for the svgo library and its dependencies.
+            runtimes = [
+                # MacOS only system component
+                ExecJS::Runtimes::JavaScriptCore,
+                ExecJS::Runtimes::MiniRacer,
+                ExecJS::Runtimes::Node
+            ]
+            runtime = runtimes.select {|r| r.available?}.first
+            unless runtime
+                throw ExecJS::RuntimeUnavailable(
+                    "No supported runtime available please install " \
+                    "`mini_racer` or `NodeJS`."
+                )
+            end
+        end
+        ExecJS.runtime = runtime
+        puts runtime
         if not @options[:plugins]
             @options[:plugins] = PLUGINS_DEFAULT
         end
