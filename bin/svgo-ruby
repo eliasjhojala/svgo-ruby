@@ -202,23 +202,19 @@ else
         puts parser.banner
         exit 2
     else
-        result = svgo.optimize_file(input_file)
+        begin
+          data_out = svgo.optimize_file(input_file)
+        rescue => err
+            puts err.message
+            exit(1)
+        end
     end
-end
-
-if result['errors'].length > 0
-  if result['errors'].length > 1
-    puts %Q(Errors occurred: \n - #{result['errors'].join("\n - s")})
-  else
-    puts "An error occurred: #{result['errors'][0]}"
-  end
-  exit(1)
 end
 
 unless output_file
     puts result['data']
 else
-    File.new(output_file, 'w').write(result['data'])
+    File.new(output_file, 'w').write(data_out)
 end
 
 

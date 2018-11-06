@@ -130,14 +130,13 @@ class SvgOptimizer
             ]
             runtime = runtimes.select {|r| r.available?}.first
             unless runtime
-                throw ExecJS::RuntimeUnavailable(
+                raise ExecJS::RuntimeUnavailable.new(
                     "No supported runtime available please install " \
                     "`mini_racer` or `NodeJS`."
                 )
             end
         end
         ExecJS.runtime = runtime
-        puts runtime
         if not @options[:plugins]
             @options[:plugins] = PLUGINS_DEFAULT
         end
@@ -150,7 +149,15 @@ class SvgOptimizer
     end
 
     def optimize(svg_data)
-        @context.call("svgo", @options.to_json, svg_data.to_s);
+        result = @context.call("svgo", @options.to_json, svg_data.to_s);
+        if result['errors'].length > 0
+            if result['errors'].length > 1
+                err = %Q(Errors occurred: \n - #{result['errors'].join("\n - s")})
+            else
+                err = "An error occurred: #{result['errors'][0]}"
+            end
+            raise StandardError.new(err)
+        end
     end
 
     def optimize_file(svg_file)

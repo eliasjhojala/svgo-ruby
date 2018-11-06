@@ -78,7 +78,7 @@ function SVGO(options) {
     var lastSize = Number.POSITIVE_INFINITY;
     var newSize = 0;
     var counter = 0;
-
+    self.svgjs = undefined;
     SVG2JS(svgstr, function(svgjs) {
       if (svgjs.error) {
         // If we don't have anything yet, throw an exception.
@@ -106,8 +106,12 @@ function SVGO(options) {
         self.svgjs = svgjs;
       }
     });
+    var xml;
+    if (self.svgjs !== undefined && typeof self.svgjs.content !== "undefined") {
+      xml = JS2SVG(self.svgjs, self.options.js2svg).data;
+    }
     return {
-      data: JS2SVG(self.svgjs, self.options.js2svg).data,
+      data: xml,
       errors: errors,
       passes: counter
     };
