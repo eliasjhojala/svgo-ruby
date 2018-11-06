@@ -1,6 +1,7 @@
 require 'execjs'
 require 'json'
 require 'pry'
+require 'ostruct'
 
 PLUGINS_DEFAULT = [
     :addAttributesToSVGElement,
@@ -42,20 +43,85 @@ PLUGINS_DEFAULT = [
     :removeXMLProcInst
 ]
 
+class SvgoOptions
+    def initialize
+        @options = OpenStruct.new(
+            js2svg: OpenStruct.new(pretty: false),
+            plugins: PLUGINS_DEFAULT,
+            floatPrecision: 6,
+            multipass: false
+        )
+        yield @options if block_given?
+    end
+
+    def get_options(*args)
+        options = @options.to_h
+        options[:js2svg] = options[:js2svg].to_h
+        options
+    end
+
+    def to_s
+        get_options.to_json
+    end
+
+    def js2svg
+        @options.js2svg
+    end
+
+    def js2svg=(arg)
+        @options.js2svg = arg
+    end
+
+    def plugins
+        @options.plugins
+    end
+
+    def plugins=(arg)
+        @options.plugins = arg
+    end
+
+    def floatPrecision
+        @options.floatPrecision
+    end
+
+    def floatPrecision=(arg)
+        @options.floatPrecision = arg
+    end
+
+    def multipass
+        @options.multipass
+    end
+
+    def multipass=(arg)
+        @options.multipass = arg
+    end
+
+    def [](key)
+        @options[key.to_sym]
+    end
+end
+
 class SvgOptimizer
-    def initialize(options)
-        if not options.respond_to? plugins
-            options.plugins = PLUGINS_DEFAULT.map {|p| [p, true]}.to_h
+    def initialize(options=SvgoOptions.new)
+        yield options if block_given?
+        if options.is_a? SvgoOptions
+            @options = options.get_options
+        else
+            @options = options
         end
-        valid_svgo_opts = [:js2svg, :plugins, :multipass, :floatPrecision]
-        @config = options.select { |k,_| valid_svgo_opts.include? k }.to_json
+        if not @options[:plugins]
+            @options[:plugins] = PLUGINS_DEFAULT
+        end
+        if @options[:plugins].is_a? Array
+            @options[:plugins] = @options[:plugins].map {|p| [p, true]}.to_h
+        end
         svgo_js = File.expand_path("../../svgo-js/svgo-built.js", __FILE__)
         svgo_module = File.open(svgo_js, "r:utf-8", &:read)
         @context = ExecJS.compile(svgo_module)
     end
 
     def optimize(svg_data)
-        @context.call("svgo", @config, svg_data.to_s);
+        @context.call("svgo", @options.to_json, svg_data.to_s);
     end
 
     def optimize_file(svg_file)

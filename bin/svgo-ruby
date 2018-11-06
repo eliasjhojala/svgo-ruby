@@ -10,14 +10,11 @@ $:.push File.expand_path("../../lib", __FILE__)
 require 'svgo'
 require 'version'
 require 'optparse'
-require 'ostruct'
 require 'pp'
+require 'ostruct'
 
-options = OpenStruct.new
-options.verbose = false
-options.output_file = nil
-options.js2svg = { pretty: false }
-options.floatPrecision = 7
+options = SvgoOptions.new
+output_file = nil
 plugins = {
 addAttributesToSVGElement:
   "adds attributes to an outer <svg> element",
@@ -118,21 +115,19 @@ parser = OptionParser.new do |opts|
   #  options.verbose = v
   #end
   opts.on("-o", "--out [file]", String, "Output file.") do |file|
-    options.output_file = file
+    output_file = file
   end
   opts.on("-p", "--precision [1..9]", Integer,
     "Number between 1 and 9, the amount of decimals in path coordinates." \
     "Set this to the highest number that makes no visual difference for " \
     "your SVGs. (default=7)"
     ) do |precision|
-      if not precision.between? 1, 9
+      unless precision.between? 1, 9
         puts "Invalid precision, should be in range 1 - 9."
         exit 2
       end
       options.floatPrecision = precision
   end
-  opts.separator ""
-  opts.separator "Enabling/disabling plugins:"
   opts.on_tail("--version", "Show version") do
     puts SvgoVersion::VERSION
     exit
@@ -142,7 +137,7 @@ parser = OptionParser.new do |opts|
     exit
   end
   opts.on("--[no-]pretty", "Pretty print SVG.") do |state|
-    options.js2svg[:pretty] = state
+    options.js2svg.pretty = state
   end
   opts.on(
     "--[no-]multi-pass",
@@ -150,6 +145,8 @@ parser = OptionParser.new do |opts|
     "is no size difference.") do |state|
     options.multipass = state
   end
+  opts.separator ""
+  opts.separator "Enabling/disabling plugins:"
   plugins.each do |p, desc|
     opts.on("--[no-]#{p}", desc) do |state|
         options.plugins[p.to_sym] = state
@@ -191,16 +188,16 @@ end
 
 parser.parse!
 
-svgo = SvgOptimizer.new(options.to_h)
+svgo = SvgOptimizer.new(options)
 
 # Read from stdin..
-if not STDIN.tty? and not STDIN.closed?
+unless STDIN.tty? and not STDIN.closed?
     input_data = ARGF.read
     result = svgo.optimize(input_data)
 else
     # See if there is an input file name
     input_file = ARGV.pop
-    if not input_file
+    unless input_file
         puts "No input file specified."
         puts parser.banner
         exit 2
@@ -218,10 +215,10 @@ if result['errors'].length > 0
   exit(1)
 end
 
-if not options.output_file
+unless output_file
     puts result['data']
 else
-    File.new(options.output_file, 'w').write(result['data'])
+    File.new(output_file, 'w').write(result['data'])
 end
 
 

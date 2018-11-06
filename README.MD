@@ -11,7 +11,25 @@ from SVG files. Can strip files so they are optimised for web use. Go to [SVGO]
 As intended: a Ruby library. Add it to your Gemfile or *.gemspec file and
 install it.
 
-You can pass options to the class that correspond to [SVGO]
+#### Method 1 (Recommended)
+
+By supplying a block that modifies the default options in `SvgoOptions`.
+
+```ruby
+require('svgo')
+svg_file = "path/to/a.svg"
+svgo = SvgOptimizer.new() do | options |
+    options.plugins << :removeRasterImages # (disabled by default)
+    options.plugins.delete(:cleanupIDs) # (enabled by default)
+    options.js2svg.pretty = true
+end
+svgo.optimize(File.read(svg_file))
+# => <svg xmlns="http://www.w3.org/2000/svg" ...
+```
+
+#### Method 2
+
+You can manually pass options to the class that correspond to [SVGO]
 (https://github.com/svg/svgo)'s documentation.
 
 ```ruby
@@ -32,6 +50,27 @@ svgo.optimize(File.read(svg_file))
 
 svgo.optimize_file(svg_file)
 # => <svg xmlns="http://www.w3.org/2000/svg" ...
+```
+
+You can also choose the plugins to use, you can either pass the exact plugins you want with their configuration, or you can modify the default plugin list.
+
+```ruby
+require('svgo')
+svg_file = "path/to/a.svg"
+options = {
+    plugins: {
+        :addAttributesToSVGElement=>true,
+        :addClassesToSVGElement=>true,
+        :cleanupAttrs=>false,
+        :cleanupEnableBackground=>true,
+        :cleanupIDs=>false,
+        :cleanupListOfValues=>true,
+        :cleanupNumericValues=>true,
+        :collapseGroups=>true,
+        #etc..
+    }
+}
+svgo = SvgOptimizer.new(options)
 ```
 
 ### As a CLI tool
