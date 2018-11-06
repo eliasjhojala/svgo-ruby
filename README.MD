@@ -1,8 +1,31 @@
 # A Ruby wrapper for Node SVGO
 
 Removes metadata and editor data elements and attributes that are redundant
-from SVG files. Can strip files so they are optimised for web use. Go to [SVGO]
-(https://github.com/svg/svgo) for more documentation on features.
+from SVG files. Can strip files so they are optimised for web use. Go to 
+[SVGO](https://github.com/svg/svgo) for more documentation on features.
+
+## How this works
+
+[`execjs`](https://github.com/rails/execjs) is used to run the Node SVGO as a 
+library. The SVGO library returns a JavaScript Promise, which is currently not
+supported by `execjs` and probably never will be. `setTimeout` and sleep-like
+functions are also disabled in `execjs` so we can't wait for the Promise to get
+fulfilled. Therefore there is a small wrapper JavaScript in this repository 
+that calls all the components that SVGO is made up of, but without the 
+`Promise`. It also wraps up the configuration of plugins the way it is expected
+by SVGO's components. Lastly `require` is not supported by `execjs` so all of 
+this is transpiled to one monolithic JavaScript file - that is completely 
+self-contained, using [browserify](http://browserify.org/).
+
+__NOTE:__ `execjs` supports a variety of JavaSript runtimes, notably 
+[`therubyracer`](https://github.com/cowboyd/therubyracer), but `therubyracer`
+depends on an ancient [`libv8`](https://github.com/cowboyd/libv8), which 
+doesn't support some of the modern syntax used in SVGO. Therefore `mini_racer`
+(a drop in replacement for `therubyracer`) is a dependency, which uses a much
+more recent `libv8`.
+
+If you have [Node](https://nodejs.org/) installed you could also use that as a 
+runtime. 
 
 ## How to use?
 
@@ -29,8 +52,8 @@ svgo.optimize(File.read(svg_file))
 
 #### Method 2
 
-You can manually pass options to the class that correspond to [SVGO]
-(https://github.com/svg/svgo)'s documentation.
+You can manually pass options to the class that correspond to 
+[SVGO](https://github.com/svg/svgo)'s documentation.
 
 ```ruby
 require('svgo')
@@ -100,3 +123,7 @@ docker run -i svgo < test/fixtures/ruby.svg > test/fixtures/ruby.optim.svg
 -rw-r--r--  1 user  staff   9.5K Nov  5 22:16 ruby.optim.svg
 -rw-r--r--  1 user  staff    23K Nov  5 22:12 ruby.svg
 ```
+
+## Building Node SVGO from source
+
+Because `execjs`
