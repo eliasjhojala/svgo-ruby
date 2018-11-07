@@ -158,6 +158,7 @@ class SvgOptimizer
             end
             raise StandardError.new(err)
         end
+        result
     end
 
     def optimize_file(svg_file)
