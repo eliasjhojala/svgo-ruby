@@ -28934,7 +28934,7 @@ Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
-},{"./_stream_duplex":359,"./internal/streams/destroy":365,"./internal/streams/stream":366,"_process":357,"core-util-is":6,"inherits":309,"process-nextick-args":356,"safe-buffer":372,"timers":444,"util-deprecate":446}],364:[function(require,module,exports){
+},{"./_stream_duplex":359,"./internal/streams/destroy":365,"./internal/streams/stream":366,"_process":357,"core-util-is":6,"inherits":309,"process-nextick-args":356,"safe-buffer":372,"timers":445,"util-deprecate":447}],364:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -43669,7 +43669,133 @@ exports.fn = function(node, opts, extra) {
     return node;
 };
 
-},{"./_collections.js":398,"css-tree":19,"css-url-regex":119,"path":355,"unquote":445}],420:[function(require,module,exports){
+},{"./_collections.js":398,"css-tree":19,"css-url-regex":119,"path":355,"unquote":446}],420:[function(require,module,exports){
+'use strict';
+
+var DEFAULT_SEPARATOR = ':';
+
+exports.type = 'perItem';
+
+exports.active = false;
+
+exports.description = 'removes specified attributes';
+
+exports.params = {
+    elemSeparator: DEFAULT_SEPARATOR,
+    attrs: []
+};
+
+/**
+ * Remove attributes
+ *
+ * @param elemSeparator
+ *   format: string
+ *
+ * @param attrs:
+ *
+ *   format: [ element* : attribute* ]
+ *
+ *   element   : regexp (wrapped into ^...$), single * or omitted > all elements
+ *   attribute : regexp (wrapped into ^...$)
+ *
+ *   examples:
+ *
+ *     > basic: remove fill attribute
+ *     ---
+ *     removeAttrs:
+ *       attrs: 'fill'
+ *
+ *     > remove fill attribute on path element
+ *     ---
+ *       attrs: 'path:fill'
+ *
+ *
+ *     > remove all fill and stroke attribute
+ *     ---
+ *       attrs:
+ *         - 'fill'
+ *         - 'stroke'
+ *
+ *     [is same as]
+ *
+ *       attrs: '(fill|stroke)'
+ *
+ *     [is same as]
+ *
+ *       attrs: '*:(fill|stroke)'
+ *
+ *     [is same as]
+ *
+ *       attrs: '.*:(fill|stroke)'
+ *
+ *
+ *     > remove all stroke related attributes
+ *     ----
+ *     attrs: 'stroke.*'
+ *
+ *
+ * @param {Object} item current iteration item
+ * @param {Object} params plugin params
+ * @return {Boolean} if false, item will be filtered out
+ *
+ * @author Benny Schudel
+ */
+exports.fn = function(item, params) {
+
+        // wrap into an array if params is not
+    if (!Array.isArray(params.attrs)) {
+        params.attrs = [params.attrs];
+    }
+
+    if (item.isElem()) {
+        var elemSeparator = typeof params.elemSeparator == 'string' ? params.elemSeparator : DEFAULT_SEPARATOR;
+
+            // prepare patterns
+        var patterns = params.attrs.map(function(pattern) {
+
+                // apply to all elements if specifc element is omitted
+            if (pattern.indexOf(elemSeparator) === -1) {
+                pattern = ['.*', elemSeparator, pattern].join('');
+            }
+
+                // create regexps for element and attribute name
+            return pattern.split(elemSeparator)
+                .map(function(value) {
+
+                        // adjust single * to match anything
+                    if (value === '*') { value = '.*'; }
+
+                    return new RegExp(['^', value, '$'].join(''), 'i');
+                });
+
+        });
+
+            // loop patterns
+        patterns.forEach(function(pattern) {
+
+                // matches element
+            if (pattern[0].test(item.elem)) {
+
+                    // loop attributes
+                item.eachAttr(function(attr) {
+                    var name = attr.name;
+
+                        // matches attribute name
+                    if (pattern[1].test(name)) {
+                        item.removeAttr(name);
+                    }
+
+                });
+
+            }
+
+        });
+
+    }
+
+};
+
+},{}],421:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -43698,7 +43824,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],421:[function(require,module,exports){
+},{}],422:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -43732,7 +43858,7 @@ exports.fn = function(item, params) {
 
 };
 
-},{}],422:[function(require,module,exports){
+},{}],423:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -43766,7 +43892,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],423:[function(require,module,exports){
+},{}],424:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -43808,7 +43934,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],424:[function(require,module,exports){
+},{}],425:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -43875,7 +44001,7 @@ exports.fn = function(item, params) {
 
 };
 
-},{"./_collections":398}],425:[function(require,module,exports){
+},{"./_collections":398}],426:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -43957,7 +44083,7 @@ exports.fn = function(item, params) {
     }
 };
 
-},{}],426:[function(require,module,exports){
+},{}],427:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -43988,7 +44114,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],427:[function(require,module,exports){
+},{}],428:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItemReverse';
@@ -44022,7 +44148,7 @@ exports.fn = function(item) {
 
 };
 
-},{"./_collections":398}],428:[function(require,module,exports){
+},{"./_collections":398}],429:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44083,7 +44209,7 @@ exports.fn = function(item, params) {
 
 };
 
-},{}],429:[function(require,module,exports){
+},{}],430:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44310,7 +44436,7 @@ exports.fn = function (item, params) {
 
 };
 
-},{}],430:[function(require,module,exports){
+},{}],431:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44335,7 +44461,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],431:[function(require,module,exports){
+},{}],432:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44374,7 +44500,7 @@ exports.fn = function(item) {
 
 };
 
-},{"./_collections":398}],432:[function(require,module,exports){
+},{"./_collections":398}],433:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44404,7 +44530,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],433:[function(require,module,exports){
+},{}],434:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44429,7 +44555,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],434:[function(require,module,exports){
+},{}],435:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44454,7 +44580,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],435:[function(require,module,exports){
+},{}],436:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44479,7 +44605,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],436:[function(require,module,exports){
+},{}],437:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44631,7 +44757,7 @@ exports.fn = function(item, params) {
 
 };
 
-},{"./_collections":398}],437:[function(require,module,exports){
+},{"./_collections":398}],438:[function(require,module,exports){
 'use strict';
 
 exports.type = 'full';
@@ -44740,7 +44866,7 @@ exports.fn = function(data) {
 
 };
 
-},{}],438:[function(require,module,exports){
+},{}],439:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44795,7 +44921,7 @@ function getUsefulItems(item, usefulItems) {
     return usefulItems;
 }
 
-},{"./_collections":398}],439:[function(require,module,exports){
+},{"./_collections":398}],440:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44897,7 +45023,7 @@ exports.fn = function(item, params) {
 
 };
 
-},{"./_collections":398}],440:[function(require,module,exports){
+},{"./_collections":398}],441:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44947,7 +45073,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],441:[function(require,module,exports){
+},{}],442:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -44976,7 +45102,7 @@ exports.fn = function(item) {
     }
 
 };
-},{}],442:[function(require,module,exports){
+},{}],443:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -45002,7 +45128,7 @@ exports.fn = function(item) {
 
 };
 
-},{}],443:[function(require,module,exports){
+},{}],444:[function(require,module,exports){
 'use strict';
 
 exports.type = 'perItem';
@@ -45088,7 +45214,7 @@ exports.fn = function(item, params) {
 
 };
 
-},{}],444:[function(require,module,exports){
+},{}],445:[function(require,module,exports){
 (function (setImmediate,clearImmediate){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -45167,7 +45293,7 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
   delete immediateIds[id];
 };
 }).call(this,require("timers").setImmediate,require("timers").clearImmediate)
-},{"process/browser.js":357,"timers":444}],445:[function(require,module,exports){
+},{"process/browser.js":357,"timers":445}],446:[function(require,module,exports){
 var reg = /[\'\"]/
 
 module.exports = function unquote(str) {
@@ -45183,7 +45309,7 @@ module.exports = function unquote(str) {
   return str
 }
 
-},{}],446:[function(require,module,exports){
+},{}],447:[function(require,module,exports){
 (function (global){
 
 /**
@@ -45254,7 +45380,7 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],447:[function(require,module,exports){
+},{}],448:[function(require,module,exports){
 "use strict";
 var CONFIG = require("../node_modules/svgo/lib/svgo/config.js");
 var SVG2JS = require("../node_modules/svgo/lib/svgo/svg2js.js");
@@ -45303,7 +45429,8 @@ var pluginModules = {
   removeViewBox: require("../node_modules/svgo/plugins/removeViewBox"),
   removeXMLNS: require("../node_modules/svgo/plugins/removeXMLNS"),
   removeXMLProcInst: require("../node_modules/svgo/plugins/removeXMLProcInst"),
-  sortAttrs: require("../node_modules/svgo/plugins/sortAttrs")
+  sortAttrs: require("../node_modules/svgo/plugins/sortAttrs"),
+  removeAttrs: require("../node_modules/svgo/plugins/removeAttrs")
 };
 
 function SVGO(options) {
@@ -45320,8 +45447,8 @@ function SVGO(options) {
         if (value)
           options.plugins.push(plugin);
         break;
-      case "string":
-        plugin.options = value;
+      default:
+        plugin.params = value;
         options.plugins.push(plugin);
         break;
     }
@@ -45393,5 +45520,5 @@ module.exports = function(options, data) {
   return svgoContext.optimize(data);
 };
 
-},{"../node_modules/svgo/lib/svgo/config.js":389,"../node_modules/svgo/lib/svgo/js2svg.js":393,"../node_modules/svgo/lib/svgo/plugins.js":395,"../node_modules/svgo/lib/svgo/svg2js.js":396,"../node_modules/svgo/plugins/addAttributesToSVGElement":401,"../node_modules/svgo/plugins/addClassesToSVGElement":402,"../node_modules/svgo/plugins/cleanupAttrs":403,"../node_modules/svgo/plugins/cleanupEnableBackground":404,"../node_modules/svgo/plugins/cleanupIDs":405,"../node_modules/svgo/plugins/cleanupListOfValues":406,"../node_modules/svgo/plugins/cleanupNumericValues":407,"../node_modules/svgo/plugins/collapseGroups":408,"../node_modules/svgo/plugins/convertColors":409,"../node_modules/svgo/plugins/convertPathData":410,"../node_modules/svgo/plugins/convertShapeToPath":411,"../node_modules/svgo/plugins/convertStyleToAttrs":412,"../node_modules/svgo/plugins/convertTransform":413,"../node_modules/svgo/plugins/inlineStyles":414,"../node_modules/svgo/plugins/mergePaths":415,"../node_modules/svgo/plugins/minifyStyles":416,"../node_modules/svgo/plugins/moveElemsAttrsToGroup":417,"../node_modules/svgo/plugins/moveGroupAttrsToElems":418,"../node_modules/svgo/plugins/prefixIds":419,"../node_modules/svgo/plugins/removeComments":420,"../node_modules/svgo/plugins/removeDesc":421,"../node_modules/svgo/plugins/removeDimensions":422,"../node_modules/svgo/plugins/removeDoctype":423,"../node_modules/svgo/plugins/removeEditorsNSData":424,"../node_modules/svgo/plugins/removeElementsByAttr":425,"../node_modules/svgo/plugins/removeEmptyAttrs":426,"../node_modules/svgo/plugins/removeEmptyContainers":427,"../node_modules/svgo/plugins/removeEmptyText":428,"../node_modules/svgo/plugins/removeHiddenElems":429,"../node_modules/svgo/plugins/removeMetadata":430,"../node_modules/svgo/plugins/removeNonInheritableGroupAttrs":431,"../node_modules/svgo/plugins/removeRasterImages":432,"../node_modules/svgo/plugins/removeScriptElement":433,"../node_modules/svgo/plugins/removeStyleElement":434,"../node_modules/svgo/plugins/removeTitle":435,"../node_modules/svgo/plugins/removeUnknownsAndDefaults":436,"../node_modules/svgo/plugins/removeUnusedNS":437,"../node_modules/svgo/plugins/removeUselessDefs":438,"../node_modules/svgo/plugins/removeUselessStrokeAndFill":439,"../node_modules/svgo/plugins/removeViewBox":440,"../node_modules/svgo/plugins/removeXMLNS":441,"../node_modules/svgo/plugins/removeXMLProcInst":442,"../node_modules/svgo/plugins/sortAttrs":443}]},{},[447])(447)
+},{"../node_modules/svgo/lib/svgo/config.js":389,"../node_modules/svgo/lib/svgo/js2svg.js":393,"../node_modules/svgo/lib/svgo/plugins.js":395,"../node_modules/svgo/lib/svgo/svg2js.js":396,"../node_modules/svgo/plugins/addAttributesToSVGElement":401,"../node_modules/svgo/plugins/addClassesToSVGElement":402,"../node_modules/svgo/plugins/cleanupAttrs":403,"../node_modules/svgo/plugins/cleanupEnableBackground":404,"../node_modules/svgo/plugins/cleanupIDs":405,"../node_modules/svgo/plugins/cleanupListOfValues":406,"../node_modules/svgo/plugins/cleanupNumericValues":407,"../node_modules/svgo/plugins/collapseGroups":408,"../node_modules/svgo/plugins/convertColors":409,"../node_modules/svgo/plugins/convertPathData":410,"../node_modules/svgo/plugins/convertShapeToPath":411,"../node_modules/svgo/plugins/convertStyleToAttrs":412,"../node_modules/svgo/plugins/convertTransform":413,"../node_modules/svgo/plugins/inlineStyles":414,"../node_modules/svgo/plugins/mergePaths":415,"../node_modules/svgo/plugins/minifyStyles":416,"../node_modules/svgo/plugins/moveElemsAttrsToGroup":417,"../node_modules/svgo/plugins/moveGroupAttrsToElems":418,"../node_modules/svgo/plugins/prefixIds":419,"../node_modules/svgo/plugins/removeAttrs":420,"../node_modules/svgo/plugins/removeComments":421,"../node_modules/svgo/plugins/removeDesc":422,"../node_modules/svgo/plugins/removeDimensions":423,"../node_modules/svgo/plugins/removeDoctype":424,"../node_modules/svgo/plugins/removeEditorsNSData":425,"../node_modules/svgo/plugins/removeElementsByAttr":426,"../node_modules/svgo/plugins/removeEmptyAttrs":427,"../node_modules/svgo/plugins/removeEmptyContainers":428,"../node_modules/svgo/plugins/removeEmptyText":429,"../node_modules/svgo/plugins/removeHiddenElems":430,"../node_modules/svgo/plugins/removeMetadata":431,"../node_modules/svgo/plugins/removeNonInheritableGroupAttrs":432,"../node_modules/svgo/plugins/removeRasterImages":433,"../node_modules/svgo/plugins/removeScriptElement":434,"../node_modules/svgo/plugins/removeStyleElement":435,"../node_modules/svgo/plugins/removeTitle":436,"../node_modules/svgo/plugins/removeUnknownsAndDefaults":437,"../node_modules/svgo/plugins/removeUnusedNS":438,"../node_modules/svgo/plugins/removeUselessDefs":439,"../node_modules/svgo/plugins/removeUselessStrokeAndFill":440,"../node_modules/svgo/plugins/removeViewBox":441,"../node_modules/svgo/plugins/removeXMLNS":442,"../node_modules/svgo/plugins/removeXMLProcInst":443,"../node_modules/svgo/plugins/sortAttrs":444}]},{},[448])(448)
 });
