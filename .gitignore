@@ -1,3 +1,4 @@
 node_modules
 svgo-?.?.?.gem
 **/*.optim.svg
+vendor/

@@ -192,8 +192,7 @@ svgo = SvgOptimizer.new(options)
 
 # Read from stdin..
 unless STDIN.tty? and not STDIN.closed?
-    input_data = ARGF.read
-    result = svgo.optimize(input_data)
+    result = svgo.optimize(ARGF.read)
 else
     # See if there is an input file name
     input_file = ARGV.pop
@@ -203,7 +202,7 @@ else
         exit 2
     else
         begin
-          data_out = svgo.optimize_file(input_file)
+          result = svgo.optimize_file(input_file)
         rescue => err
             puts err.message
             exit(1)
@@ -214,7 +213,7 @@ end
 unless output_file
     puts result['data']
 else
-    File.new(output_file, 'w').write(data_out)
+    File.new(output_file, 'w').write(result['data'])
 end
 
 

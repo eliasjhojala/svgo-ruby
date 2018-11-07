@@ -149,7 +149,10 @@ class SvgOptimizer
     end
 
     def optimize(svg_data)
-        result = @context.call("svgo", @options.to_json, svg_data.to_s);
+        result = @context.call("svgo", @options.to_json, svg_data.to_s)
+        if not result
+            raise StandardError.new("Bad response from JavaScript runtime.")
+        end
         if result['errors'].length > 0
             if result['errors'].length > 1
                 err = %Q(Errors occurred: \n - #{result['errors'].join("\n - s")})
