@@ -4,7 +4,6 @@ require "version"
 Gem::Specification.new do |s|
   s.name        = "svgo"
   s.version     = SvgoVersion::VERSION
-  s.date        = "2018-10-26"
   s.summary     = "SVGO for Ruby."
   s.description = "A Ruby wrapper for SVGO using execjs."
   s.authors     = ["Chris Snijder"]
