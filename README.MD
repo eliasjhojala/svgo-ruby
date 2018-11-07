@@ -4,29 +4,6 @@ Removes metadata and editor data elements and attributes that are redundant
 from SVG files. Can strip files so they are optimised for web use. Go to 
 [SVGO](https://github.com/svg/svgo) for more documentation on features.
 
-## How this works
-
-[`execjs`](https://github.com/rails/execjs) is used to run the Node SVGO as a 
-library. The SVGO library returns a JavaScript Promise, which is currently not
-supported by `execjs` and probably never will be. `setTimeout` and sleep-like
-functions are also disabled in `execjs` so we can't wait for the Promise to get
-fulfilled. Therefore there is a small wrapper JavaScript in this repository 
-that calls all the components that SVGO is made up of, but without the 
-`Promise`. It also wraps up the configuration of plugins the way it is expected
-by SVGO's components. Lastly `require` is not supported by `execjs` so all of 
-this is transpiled to one monolithic JavaScript file - that is completely 
-self-contained, using [browserify](http://browserify.org/).
-
-__NOTE:__ `execjs` supports a variety of JavaSript runtimes, notably 
-[`therubyracer`](https://github.com/cowboyd/therubyracer), but `therubyracer`
-depends on an ancient [`libv8`](https://github.com/cowboyd/libv8), which 
-doesn't support some of the modern syntax used in SVGO. Therefore `mini_racer`
-(a drop in replacement for `therubyracer`) is a dependency, which uses a much
-more recent `libv8`.
-
-If you have [Node](https://nodejs.org/) installed you could also use that as a 
-runtime. 
-
 ## How to use?
 
 ### As a library
@@ -75,7 +52,8 @@ svgo.optimize_file(svg_file)
 # => <svg xmlns="http://www.w3.org/2000/svg" ...
 ```
 
-You can also choose the plugins to use, you can either pass the exact plugins you want with their configuration, or you can modify the default plugin list.
+You can also choose the plugins to use, you can either pass the exact plugins 
+you want with their configuration, or you can modify the default plugin list.
 
 ```ruby
 require('svgo')
@@ -98,7 +76,9 @@ svgo = SvgOptimizer.new(options)
 
 ### As a CLI tool
 
-Strictly speaking this mode is for testing only. But if you can't install NodeJS, and you do have a Ruby environment and you really need a CLI tool, you might be able to squeeze out some optimised files from this utility.
+Strictly speaking this mode is for testing only. But if you can't install 
+NodeJS, and you do have a Ruby environment and you really need a CLI tool, you
+might be able to squeeze out some optimised files from this utility.
 
 ``` bash
 gem install svgo-ruby
@@ -124,6 +104,49 @@ docker run -i svgo < test/fixtures/ruby.svg > test/fixtures/ruby.optim.svg
 -rw-r--r--  1 user  staff    23K Nov  5 22:12 ruby.svg
 ```
 
-## Building Node SVGO from source
+## How this works
 
-Because `execjs`
+[`execjs`](https://github.com/rails/execjs) is used to run the Node SVGO as a 
+library. The SVGO library returns a JavaScript Promise, which is currently not
+supported by `execjs` and probably never will be. `setTimeout` and sleep-like
+functions are also disabled in `execjs` so we can't wait for the Promise to get
+fulfilled. Therefore there is a small wrapper JavaScript in this repository 
+that calls all the components that SVGO is made up of, but without the 
+`Promise`. It also wraps up the configuration of plugins the way it is expected
+by SVGO's components. Lastly `require` is not supported by `execjs` so all of 
+this is transpiled to one monolithic JavaScript file - that is completely 
+self-contained, using [browserify](http://browserify.org/).
+
+__NOTE:__ `execjs` supports a variety of JavaSript runtimes, notably 
+[`therubyracer`](https://github.com/cowboyd/therubyracer), but `therubyracer`
+depends on an ancient [`libv8`](https://github.com/cowboyd/libv8), which 
+doesn't support some of the modern syntax used in SVGO. Therefore `mini_racer`
+(a drop in replacement for `therubyracer`) is a dependency, which uses a much
+more recent `libv8`.
+
+If you have [Node](https://nodejs.org/) installed you could also use that as a 
+runtime. 
+
+### Transpiling Node SVGO 
+
+__TL;DR:__ A transpiled version of SVGO is included in the repository, so you
+don't need to transpile anything.
+
+Because `execjs` supports only self-contained modules, and does not allow 
+`require()`, `Promise` etc.. The SGVO library is wrapped in a JavaScript that
+requires all the main parts of SVGO and makes an SVGO function without 
+JavaScript Promises. The wrapper is then transpiled to a self-contained module
+using [browserify](http://browserify.org/).
+
+The transpile command can be found in the `Rakefile`. Assuming you have 
+[Node](https://nodejs.org/) and [yarn](https://yarnpkg.com/en/) installed on
+your system, you can then run:
+
+``` bash
+yarn install
+rake
+```
+
+__Note__: if you do not have `yarn` you can run `npm install` instead, but if
+you install Node modules often, you probably should do yourself a favour check
+out [yarn](https://yarnpkg.com/en/).
