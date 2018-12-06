@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Chris Snijder"]
   s.email       = "chris@greenhost.nl"
   s.files       = ["lib/svgo.rb"]
-  s.homepage    = "http://rubygems.org/gems/svgo"
+  s.homepage    = "https://github.com/greenhost/svgo-ruby"
   s.license     = "Apache 2.0"
   s.files       = `git ls-files`.split("\n") - [
     ".gitignore",

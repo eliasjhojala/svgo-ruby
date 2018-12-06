@@ -123,8 +123,6 @@ class SvgOptimizer
             # therubyracer is a first choice for execjs but its libv8 is too
             # old for the svgo library and its dependencies.
             runtimes = [
-                # MacOS only system component
-                ExecJS::Runtimes::JavaScriptCore,
                 ExecJS::Runtimes::MiniRacer,
                 ExecJS::Runtimes::Node
             ]
