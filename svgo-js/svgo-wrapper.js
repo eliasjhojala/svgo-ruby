@@ -46,7 +46,8 @@ var pluginModules = {
   removeViewBox: require("../node_modules/svgo/plugins/removeViewBox"),
   removeXMLNS: require("../node_modules/svgo/plugins/removeXMLNS"),
   removeXMLProcInst: require("../node_modules/svgo/plugins/removeXMLProcInst"),
-  sortAttrs: require("../node_modules/svgo/plugins/sortAttrs")
+  sortAttrs: require("../node_modules/svgo/plugins/sortAttrs"),
+  removeAttrs: require("../node_modules/svgo/plugins/removeAttrs")
 };
 
 function SVGO(options) {
@@ -63,8 +64,8 @@ function SVGO(options) {
         if (value)
           options.plugins.push(plugin);
         break;
-      case "string":
-        plugin.options = value;
+      default:
+        plugin.params = value;
         options.plugins.push(plugin);
         break;
     }

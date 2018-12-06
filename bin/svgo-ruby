@@ -152,7 +152,7 @@ parser = OptionParser.new do |opts|
         options.plugins[p.to_sym] = state
     end
   end
-  opts.on("--removeAttrs", String, %q(
+  opts.on("--removeAttrs [attrs]", String, %q(
     A comma separated list of Javascript compatible regular expressions.
     The format described in the plugin:
 
@@ -182,12 +182,11 @@ parser = OptionParser.new do |opts|
     https://github.com/svg/svgo/blob/master/plugins/removeAttrs.js
     ).sub(/^\n\s+/,'').gsub(/ {4}/, " " * 12)) do |plugin_args|
       patterns = plugin_args.sub(/\s*,\s*/, ",").split(",")
-      options.plugins.removeAttrs = patterns
+      options.plugins[:removeAttrs] = {attrs: patterns}
     end
 end
 
 parser.parse!
-
 svgo = SvgOptimizer.new(options)
 
 # Read from stdin..
