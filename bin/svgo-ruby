@@ -104,9 +104,6 @@ sortAttrs:
   "sorts element attributes (disabled by default)"
 }
 
-options.plugins = Hash[
-  plugins.map { |k, str| [k, !str.include?("disabled by default")]}
-]
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: svgo-ruby [options] [input file]"
   opts.separator ""

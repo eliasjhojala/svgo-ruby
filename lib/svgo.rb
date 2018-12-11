@@ -1,11 +1,10 @@
-require 'execjs'
+require 'mini_racer'
 require 'json'
 require 'pry'
 require 'ostruct'
 
 PLUGINS_DEFAULT = [
     :addAttributesToSVGElement,
-    :addClassesToSVGElement,
     :cleanupAttrs,
     :cleanupEnableBackground,
     :cleanupIDs,
@@ -47,8 +46,7 @@ class SvgoOptions
     def initialize
         @options = OpenStruct.new(
             js2svg: OpenStruct.new(pretty: false),
-            plugins: PLUGINS_DEFAULT,
-            floatPrecision: 6,
+            plugins: PLUGINS_DEFAULT.map { | p | [ p, true ] }.to_h,
             multipass: false
         )
         yield @options if block_given?
@@ -57,6 +55,9 @@ class SvgoOptions
     def get_options(*args)
         options = @options.to_h
         options[:js2svg] = options[:js2svg].to_h
+        options[:plugins] = options[:plugins].map { | plugin, params |
+          {plugin => params}
+        }
         options
     end
 
@@ -110,6 +111,7 @@ class SvgoOptions
 end
 
 class SvgOptimizer
+    attr_accessor :options
     def initialize(options=SvgoOptions.new)
         yield options if block_given?
         if options.is_a? SvgoOptions
@@ -117,37 +119,24 @@ class SvgOptimizer
         else
             @options = options
         end
-
-        runtime = @options.delete "runtime"
-        unless runtime
-            # therubyracer is a first choice for execjs but its libv8 is too
-            # old for the svgo library and its dependencies.
-            runtimes = [
-                ExecJS::Runtimes::MiniRacer,
-                ExecJS::Runtimes::Node
-            ]
-            runtime = runtimes.select {|r| r.available?}.first
-            unless runtime
-                raise ExecJS::RuntimeUnavailable.new(
-                    "No supported runtime available please install " \
-                    "`mini_racer` or `NodeJS`."
-                )
-            end
-        end
-        ExecJS.runtime = runtime
         if not @options[:plugins]
             @options[:plugins] = PLUGINS_DEFAULT
         end
-        if @options[:plugins].is_a? Array
-            @options[:plugins] = @options[:plugins].map {|p| [p, true]}.to_h
+        if not @options[:plugins].is_a? Array
+            raise StandardError.new("`options.plugins` should be an Array.")
         end
+        @options[:plugins] = @options[:plugins].map { | p |
+          p.is_a?(Hash) ? p : {p => true}
+        }
         svgo_js = File.expand_path("../../svgo-js/svgo-built.js", __FILE__)
         svgo_module = File.open(svgo_js, "r:utf-8", &:read)
-        @context = ExecJS.compile(svgo_module)
+        @context = MiniRacer::Context.new
+        @context.eval svgo_module
+        @context.call("svgo", {setup: @options})
     end
 
     def optimize(svg_data)
-        result = @context.call("svgo", @options.to_json, svg_data.to_s)
+        result = @context.call("svgo", {optimize: svg_data.to_s})
         if not result
             raise StandardError.new("Bad response from JavaScript runtime.")
         end

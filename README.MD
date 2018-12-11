@@ -7,6 +7,15 @@ Removes metadata and editor data elements and attributes that are redundant
 from SVG files. Can strip files so they are optimised for web use. Go to
 [SVGO](https://github.com/svg/svgo) for more documentation on features.
 
+# Note to users of 1.x versions
+
+`execjs` is no longer used as a wrapper around JavaScript run times, instead
+[`mini_racer`](https://github.com/discourse/mini_racer) is used directly. That
+means one dependency is removed. `mini_racer` was already a dependency so it
+should not make a difference during installation.
+
+
+
 ## How to use?
 
 ### As a library
@@ -63,14 +72,14 @@ require('svgo')
 svg_file = "path/to/a.svg"
 options = {
     plugins: {
-        :addAttributesToSVGElement=>true,
-        :addClassesToSVGElement=>true,
-        :cleanupAttrs=>false,
-        :cleanupEnableBackground=>true,
-        :cleanupIDs=>false,
-        :cleanupListOfValues=>true,
-        :cleanupNumericValues=>true,
-        :collapseGroups=>true,
+        addAttributesToSVGElement: true,
+        addClassesToSVGElement: true,
+        cleanupAttrs: false,
+        cleanupEnableBackground: true,
+        cleanupIDs: false,
+        cleanupListOfValues: true,
+        collapseGroups: true,
+        cleanupNumericValues: true,
         #etc..
     }
 }
@@ -109,33 +118,24 @@ docker run -i svgo < test/fixtures/ruby.svg > test/fixtures/ruby.optim.svg
 
 ## How this works
 
-[`execjs`](https://github.com/rails/execjs) is used to run the Node SVGO as a
-library. The SVGO library returns a JavaScript Promise, which is currently not
-supported by `execjs` and probably never will be. `setTimeout` and sleep-like
-functions are also disabled in `execjs` so we can't wait for the Promise to get
-fulfilled. Therefore there is a small wrapper JavaScript in this repository
+[`mini_racer`](https://github.com/discourse/mini_racer) is used to run the
+Node SVGO as a library. The SVGO library returns a JavaScript Promise, which
+is currently not supported by `mini_racer` and perhaps never will be.
+`setTimeout` and sleep-like functions are also disabled in `mini_racer` so we
+can't wait for the Promise to get fulfilled. Therefore there is a small
+wrapper JavaScript in this repository
 that calls all the components that SVGO is made up of, but without the
 `Promise`. It also wraps up the configuration of plugins the way it is expected
-by SVGO's components. Lastly `require` is not supported by `execjs` so all of
-this is transpiled to one monolithic JavaScript file - that is completely
+by SVGO's components. Lastly `require` is not supported by `mini_racer` so all
+of this is transpiled to one monolithic JavaScript file - that is completely
 self-contained, using [browserify](http://browserify.org/).
-
-__NOTE:__ `execjs` supports a variety of JavaSript runtimes, notably
-[`therubyracer`](https://github.com/cowboyd/therubyracer), but `therubyracer`
-depends on an ancient [`libv8`](https://github.com/cowboyd/libv8), which
-doesn't support some of the modern syntax used in SVGO. Therefore `mini_racer`
-(a drop in replacement for `therubyracer`) is a dependency, which uses a much
-more recent `libv8`.
-
-If you have [Node](https://nodejs.org/) installed you could also use that as a
-runtime.
 
 ### Transpiling Node SVGO
 
 __TL;DR:__ A transpiled version of SVGO is included in the repository, so you
 don't need to transpile anything.
 
-Because `execjs` supports only self-contained modules, and does not allow
+Because `mini_racer` supports only self-contained modules, and does not allow
 `require()`, `Promise` etc.. The SGVO library is wrapped in a JavaScript that
 requires all the main parts of SVGO and makes an SVGO function without
 JavaScript Promises. The wrapper is then transpiled to a self-contained module
